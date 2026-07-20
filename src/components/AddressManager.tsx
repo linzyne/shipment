@@ -47,8 +47,12 @@ export default function AddressManager({ addresses, onUpdate, onClose }: Props) 
     setPasteText('');
   };
 
-  const handleDelete = (key: string) => {
-    setEditList(prev => prev.filter(a => a.key !== key));
+  const handleDelete = (index: number) => {
+    setEditList(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFieldChange = (index: number, field: keyof AddressEntry, value: string) => {
+    setEditList(prev => prev.map((a, i) => (i === index ? { ...a, [field]: value } : a)));
   };
 
   const handleSave = () => {
@@ -99,16 +103,42 @@ export default function AddressManager({ addresses, onUpdate, onClose }: Props) 
               {editList.length === 0 && (
                 <p className="text-xs text-gray-400 text-center py-4">등록된 주소가 없습니다.</p>
               )}
-              {editList.map(a => (
-                <div key={a.key} className="flex items-start gap-3 bg-gray-50 rounded-lg px-3 py-2">
-                  <div className="flex-1 min-w-0">
-                    <span className="text-xs font-semibold text-gray-800">{a.key}</span>
-                    <span className="text-xs text-gray-500 ml-2">{a.addr1} {a.addr2}</span>
-                    <span className="text-xs text-gray-400 ml-2">{a.phone}</span>
-                    <span className="text-xs text-gray-400 ml-1">({a.zip})</span>
+              {editList.map((a, i) => (
+                <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                  <div className="flex-1 min-w-0 grid grid-cols-2 gap-1.5">
+                    <input
+                      value={a.key}
+                      onChange={(e) => handleFieldChange(i, 'key', e.target.value)}
+                      placeholder="물류센터명"
+                      className="col-span-2 text-xs font-semibold text-gray-800 bg-white border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                    />
+                    <input
+                      value={a.addr1}
+                      onChange={(e) => handleFieldChange(i, 'addr1', e.target.value)}
+                      placeholder="주소1"
+                      className="col-span-2 text-xs text-gray-600 bg-white border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                    />
+                    <input
+                      value={a.addr2}
+                      onChange={(e) => handleFieldChange(i, 'addr2', e.target.value)}
+                      placeholder="주소2"
+                      className="col-span-2 text-xs text-gray-600 bg-white border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                    />
+                    <input
+                      value={a.phone}
+                      onChange={(e) => handleFieldChange(i, 'phone', e.target.value)}
+                      placeholder="전화번호"
+                      className="text-xs text-gray-500 bg-white border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                    />
+                    <input
+                      value={a.zip}
+                      onChange={(e) => handleFieldChange(i, 'zip', e.target.value)}
+                      placeholder="우편번호"
+                      className="text-xs text-gray-500 bg-white border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                    />
                   </div>
                   <button
-                    onClick={() => handleDelete(a.key)}
+                    onClick={() => handleDelete(i)}
                     className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
