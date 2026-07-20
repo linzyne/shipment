@@ -2,17 +2,21 @@ import { useState, useCallback } from 'react';
 import FileUpload from './components/FileUpload';
 import OrderTable from './components/OrderTable';
 import AddressManager from './components/AddressManager';
+import SenderManager from './components/SenderManager';
 import {
   parseFile, buildDisplayRows, splitByReservation, extractOrderRows,
 } from './utils/dataProcessor';
 import type { DisplayRow } from './utils/dataProcessor';
 import { exportLotteExcel, exportSummaryExcel } from './utils/excelExport';
 import { printPanel } from './utils/printUtils';
-import type { AddressEntry } from './types';
+import type { AddressEntry, SenderInfo } from './types';
 import { DEFAULT_ADDRESSES } from './data/addresses';
 import './index.css';
 
 const STORAGE_KEY = 'shipment_addresses';
+const SENDER_STORAGE_KEY = 'shipment_sender';
+
+const DEFAULT_SENDER: SenderInfo = { name: '', phone1: '', phone2: '', zip: '', addr: '' };
 
 function loadAddresses(): AddressEntry[] {
   try {
@@ -24,6 +28,18 @@ function loadAddresses(): AddressEntry[] {
 
 function saveAddresses(addresses: AddressEntry[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(addresses));
+}
+
+function loadSender(): SenderInfo {
+  try {
+    const saved = localStorage.getItem(SENDER_STORAGE_KEY);
+    if (saved) return { ...DEFAULT_SENDER, ...JSON.parse(saved) };
+  } catch {}
+  return DEFAULT_SENDER;
+}
+
+function saveSender(sender: SenderInfo) {
+  localStorage.setItem(SENDER_STORAGE_KEY, JSON.stringify(sender));
 }
 
 function mergeReservedRows(existing: DisplayRow[], incoming: DisplayRow[]): DisplayRow[] {
@@ -54,6 +70,8 @@ export default function App() {
   const [fileName, setFileName] = useState('');
   const [addresses, setAddresses] = useState<AddressEntry[]>(loadAddresses);
   const [showAddressManager, setShowAddressManager] = useState(false);
+  const [sender, setSender] = useState<SenderInfo>(loadSender);
+  const [showSenderManager, setShowSenderManager] = useState(false);
   const [error, setError] = useState('');
 
   const hasData = leftRows.length > 0 || rightRows.length > 0;
@@ -117,6 +135,11 @@ export default function App() {
     saveAddresses(updated);
   };
 
+  const handleSenderUpdate = (updated: SenderInfo) => {
+    setSender(updated);
+    saveSender(updated);
+  };
+
   const handleReset = () => {
     setLeftRows([]);
     setRightRows([]);
@@ -170,16 +193,28 @@ export default function App() {
             )}
           </div>
           {activeTab === 'shipment' && (
-            <button
-              onClick={() => setShowAddressManager(true)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px',
-                fontSize: 12, color: '#666', background: 'none',
-                border: '1px solid #e5e5e5', borderRadius: 8, cursor: 'pointer',
-              }}
-            >
-              🗺️ 택배주소 관리
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button
+                onClick={() => setShowSenderManager(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px',
+                  fontSize: 12, color: '#666', background: 'none',
+                  border: '1px solid #e5e5e5', borderRadius: 8, cursor: 'pointer',
+                }}
+              >
+                📮 보내는사람 설정
+              </button>
+              <button
+                onClick={() => setShowAddressManager(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px',
+                  fontSize: 12, color: '#666', background: 'none',
+                  border: '1px solid #e5e5e5', borderRadius: 8, cursor: 'pointer',
+                }}
+              >
+                🗺️ 택배주소 관리
+              </button>
+            </div>
           )}
         </div>
       </header>
@@ -259,7 +294,7 @@ export default function App() {
                   </button>
 
                   <button
-                    onClick={() => exportLotteExcel(allRows, addresses)}
+                    onClick={() => exportLotteExcel(allRows, addresses, sender)}
                     disabled={lotteCount === 0}
                     title="쉼먼트 칸에 &quot;롯데&quot;라고 적은 항목만 모아 롯데택배 업로드용 엑셀을 만듭니다."
                     style={{
@@ -380,6 +415,14 @@ export default function App() {
           addresses={addresses}
           onUpdate={handleAddressUpdate}
           onClose={() => setShowAddressManager(false)}
+        />
+      )}
+
+      {showSenderManager && (
+        <SenderManager
+          sender={sender}
+          onUpdate={handleSenderUpdate}
+          onClose={() => setShowSenderManager(false)}
         />
       )}
     </div>

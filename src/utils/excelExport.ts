@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import type { DisplayRow } from './dataProcessor';
-import type { AddressEntry, LotteRow } from '../types';
+import type { AddressEntry, LotteRow, SenderInfo } from '../types';
 import { formatDateDisplay } from './dateUtils';
 
 // 셀을 텍스트 타입으로 강제 설정 (전화번호/우편번호 앞자리 0 보존)
@@ -35,7 +35,7 @@ function findAddressEntry(
   return partial ?? { phone: '', zip: '', addr1: '', addr2: '', key: center };
 }
 
-export function exportLotteExcel(displayRows: DisplayRow[], addresses: AddressEntry[]): void {
+export function exportLotteExcel(displayRows: DisplayRow[], addresses: AddressEntry[], sender: SenderInfo): void {
   const addrMap = new Map<string, AddressEntry>();
   addresses.forEach(a => addrMap.set(a.key.trim(), a));
 
@@ -95,6 +95,11 @@ export function exportLotteExcel(displayRows: DisplayRow[], addresses: AddressEn
   for (const r of toWrite) {
     const row = new Array(15).fill('');
     row[0]  = r.주문번호;   // A: 주문번호
+    row[1]  = sender.name;   // B: 보내는사람(지정)
+    row[2]  = sender.phone1; // C: 전화번호1(지정)
+    row[3]  = sender.phone2; // D: 전화번호2(지정)
+    row[4]  = sender.zip;    // E: 우편번호(지정)
+    row[5]  = sender.addr;   // F: 주소(지정)
     row[6]  = r.받는사람;   // G: 받는사람
     row[7]  = r.전화번호1;  // H: 전화번호1
     row[9]  = r.우편번호;   // J: 우편번호
@@ -106,8 +111,8 @@ export function exportLotteExcel(displayRows: DisplayRow[], addresses: AddressEn
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(ws_data);
 
-  // 전화번호(H=7), 우편번호(J=9) 앞자리 0 보존
-  forceTextCols(ws, toWrite.length, [7, 9]);
+  // 전화번호(C=2,D=3,H=7), 우편번호(E=4,J=9) 앞자리 0 보존
+  forceTextCols(ws, toWrite.length, [2, 3, 4, 7, 9]);
 
   XLSX.utils.book_append_sheet(wb, ws, '롯데택배');
   XLSX.writeFile(wb, `롯데택배_${formatToday()}.xlsx`);

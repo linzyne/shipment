@@ -29,3 +29,11 @@ export interface LotteRow {
   주소: string;
   상품명1: string;
 }
+
+export interface SenderInfo {
+  name: string;    // 보내는사람(지정)
+  phone1: string;  // 전화번호1(지정)
+  phone2: string;  // 전화번호2(지정)
+  zip: string;     // 우편번호(지정)
+  addr: string;    // 주소(지정)
+}
