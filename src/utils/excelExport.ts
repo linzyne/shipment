@@ -17,6 +17,24 @@ function forceTextCols(ws: XLSX.WorkSheet, rowCount: number, colIndexes: number[
   }
 }
 
+// 완전일치 우선, 없으면 저장된 키와 물류센터명이 서로 포함 관계면 매칭
+// 예: 저장 리스트 "로켓 대구3" ↔ 물류센터 "대구3"
+function findAddressEntry(
+  addresses: AddressEntry[],
+  addrMap: Map<string, AddressEntry>,
+  center: string
+): AddressEntry {
+  const exact = addrMap.get(center);
+  if (exact) return exact;
+
+  const partial = addresses.find(a => {
+    const key = a.key.trim();
+    return key.includes(center) || center.includes(key);
+  });
+
+  return partial ?? { phone: '', zip: '', addr1: '', addr2: '', key: center };
+}
+
 export function exportLotteExcel(displayRows: DisplayRow[], addresses: AddressEntry[]): void {
   const addrMap = new Map<string, AddressEntry>();
   addresses.forEach(a => addrMap.set(a.key.trim(), a));
@@ -34,7 +52,7 @@ export function exportLotteExcel(displayRows: DisplayRow[], addresses: AddressEn
     if (!m) continue;
 
     const count = m[1] ? Math.max(1, Number(m[1])) : 1;
-    const info  = addrMap.get(center) ?? { phone: '', zip: '', addr1: '', addr2: '', key: center };
+    const info  = findAddressEntry(addresses, addrMap, center);
     const fullAddr = info.addr2 ? `${info.addr1} ${info.addr2}` : info.addr1;
 
     for (let i = 0; i < count; i++) {
